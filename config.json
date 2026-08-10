@@ -1,0 +1,68 @@
+{
+  "olt_ips": {
+    "ZTE_OLT_NAME": "127.0.0.1:2301, 192.168.1.10"
+  },
+  "cdata_olts": {
+    "olt1": {
+      "name": "CDATA_OLT_NAME",
+      "ip": "127.0.0.1:2305, 192.168.100.2"
+    }
+  },
+  "selenium_olt_ips": {
+    "127.0.0.1:8081": {
+      "name": " HSGQ-G008_OLT",
+      "username": "admin",
+      "password": "admin"
+    }
+  },
+  "credentials": {
+    "telnet": {
+      "username": "admin",
+      "password": "your_telnet_password"
+    },
+    "selenium_olt": {
+      "username": "admin",
+      "password": "your_selenium_password"
+    }
+  },
+  "cdata_credentials": {
+    "username": "admin",
+    "password": "your_cdata_password"
+  },
+  "diameter_config": {
+    "base_url": "https://0.0.0.0/radiusmanager/admin.php",
+    "domain": "",
+    "path": "/",
+    "backup_urls": "https://1.1.1.1:8447/radiusmanager/admin.php"
+  },
+  "file_paths": {
+    "proctor_csv": "ZTE_OLT.csv",
+    "port_analysis_db": "port_analysis.json",
+    "selenium_db": "olt_ont_database.db",
+    "selenium_output": "olt_full_data.json"
+  },
+  "cdata_save_file": "onu_status.json",
+  "cdata_mac_file": "mac_address_list.txt",
+  "noc_tunnel": {
+    "enabled": true,
+    "servers": [
+      {
+        "tailscale_ip": "2.2.2.2",
+        "username": "your_noc_user",
+        "password": "your_noc_password"
+      }
+    ]
+  },
+  "health_check": {
+    "tunnel_test": "3.3.3.3:2301",
+    "ping_test": "8.8.8.8"
+  },
+  "selenium_settings": {
+    "max_concurrent_chrome": 1,
+    "poor_signal_threshold": -28,
+    "port_high_loss_threshold": -29
+  },
+  "debug": {
+    "enabled": true
+  }
+}
