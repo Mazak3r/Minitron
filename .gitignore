@@ -1,23 +1,48 @@
-### AL ###
-#Template for AL projects for Dynamics 365 Business Central
-#launch.json folder
+# Config with secrets
+config.json
+
+# API tokens
+config/api_token.txt
+config/allowed_ips.txt
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+
+# JSON data files (state, logs, caches)
+onu_status.json
+olt_full_data.json
+
+# CSV data files
+ZTE OLT.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+minitron_env/
+*env/
+venv/
+
+# Session files
+/tmp/phpsessid.txt
+
+# IDE
 .vscode/
-#Cache folder
-.alcache/
-#Symbols folder
-.alpackages/
-#Snapshots folder
-.snapshots/
-#Testing Output folder
-.output/
-#Extension App-file
-*.app
-#Rapid Application Development File
-rad.json
-#Translation Base-file
-*.g.xlf
-#License-files
-*.bclicense
-*.flf
-#Test results file
-TestResults.xml
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+EOF
