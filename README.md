@@ -14,7 +14,7 @@ When a name is entered into the search bar, MINITRON searches in this order:
 
 1. **ZTE OLT Database** (`ZTE OLT.csv`) — Proctor CSV with OLT, Board, Port, ONU ID mappings
 2. **CDATA FSeries OLT** — Live telnet scan and persistent state (`onu_status.json`)
-3. **Billing Server (Diameter/RADIUS)** — Account lookup via PHP session
+3. **Billing Server (RADIUS)** — Account lookup via PHP session
 
 If the name is **not found** on any OLT database but exists on the billing server:
 - If the MAC address belongs to a **radio device** (Ubiquiti or Cambium), a radio-specific troubleshooting response is shown
