@@ -128,15 +128,15 @@ There is a suspected MST/splitter issue with major port impact."
 Main diagnostic interface. Enter a name to search across all databases and get automated diagnostic reports with network analysis.
 
 ## DumbOLT (CDATA FSeries)
-EPON OLT monitor for CDATA devices. Features:
+- EPON OLT monitor for CDATA devices. Features:
 
-Live port scanning with ONU status and signal
+- Live port scanning with ONU status and signal
 
-MAC address learning and name resolution
+- MAC address learning and name resolution
 
-Reboot and delete ONUs
+- Reboot and delete ONUs
 
-Persistent state tracking
+- Persistent state tracking
 
 ## Access ONU
 
