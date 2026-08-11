@@ -171,7 +171,7 @@ Connection
 - HTTP connection to CPE IP address
 
 ## How Decisions Are Made
-The decision engine is purely statistical. By rounding port percentages to 10s and using binary flags, every possible port state maps to a known scenario. The tron.json file contains all 9,512 scenarios with their corresponding human-readable responses.
+The decision engine is purely statistical. By rounding port percentages to 10s and using binary flags, every possible port state maps to a known scenario. The testo.json file contains all 9,512 scenarios with their corresponding human-readable responses.
 
 No AI, no machine learning — just deterministic pattern matching against a complete decision matrix.
 
