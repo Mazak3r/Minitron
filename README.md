@@ -121,11 +121,13 @@ There is a suspected MST/splitter issue with major port impact."
 - Extracts: account status, CPE IP, MAC address, service plan, expiry date
 
 ---
-##Pages
-Home (Search)
+
+## Pages
+
+- Home (Search)
 Main diagnostic interface. Enter a name to search across all databases and get automated diagnostic reports with network analysis.
 
-##DumbOLT (CDATA FSeries)
+## DumbOLT (CDATA FSeries)
 EPON OLT monitor for CDATA devices. Features:
 
 Live port scanning with ONU status and signal
@@ -136,11 +138,11 @@ Reboot and delete ONUs
 
 Persistent state tracking
 
-##Access ONU
+## Access ONU
 
 Direct access to the client's router for WiFi management.
 
-Supported Devices
+## Supported Devices
 - Huawei HG8546M GPON ONUs
 
 - ZTE F460 GPON ONUs (via unified_router_api.py)
@@ -168,7 +170,7 @@ Connection
 
 - HTTP connection to CPE IP address
 
-##How Decisions Are Made
+## How Decisions Are Made
 The decision engine is purely statistical. By rounding port percentages to 10s and using binary flags, every possible port state maps to a known scenario. The tron.json file contains all 9,512 scenarios with their corresponding human-readable responses.
 
 No AI, no machine learning — just deterministic pattern matching against a complete decision matrix.
