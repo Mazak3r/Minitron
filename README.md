@@ -233,10 +233,9 @@ Enter username: john_doe/live      # Live traffic (real-time)
 Enter username: john_doe/report    # Initial report
 Enter username: john_doe/status    # Account status only
 
+```
+
 ---
-
-
-
 
 
 ### Traffic Monitor — Real-Time ONU Bandwidth Graph
