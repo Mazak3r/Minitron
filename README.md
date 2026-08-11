@@ -145,7 +145,7 @@ Direct access to the client's router for WiFi management.
 ## Supported Devices
 - Huawei HG8546M GPON ONUs
 
-- ZTE F460 GPON ONUs (via unified_router_api.py)
+- ZTE F660 GPON ONUs (via unified_router_api.py)
 
 Access Conditions
 Button appears when:
