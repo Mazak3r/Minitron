@@ -1,4 +1,4 @@
-# MINITRON
+# Minitron
 
 **Network Diagnostic Automation Platform for ISPs**
 
