@@ -8,7 +8,7 @@ MINITRON connects to ZTE GPON/EPON OLTs and CDATA FSeries OLTs via telnet to pro
 
 ## How It Works
 
-### 1. Search Pipeline
+### 1. Search Pipeline.
 
 When a name is entered into the search bar, MINITRON searches in this order:
 
