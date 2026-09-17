@@ -1,6 +1,6 @@
 # Minitron
 
-**Network Diagnostic Automation Platform for ISPs**
+**Network Diagnostic Automation Platform for ISPs with Docker file**
 
 MINITRON connects to ZTE GPON/EPON OLTs and CDATA FSeries OLTs via telnet to provide real-time ONU diagnostics, automated decision-making, and WiFi management.
 
