@@ -48,7 +48,6 @@ MINITRON automates the entire pipeline. Support engineers type a name, hit enter
 
 - **⚡ 5-Second Diagnostics** — Asynchronous Telnet + FastAPI background jobs.
 - **🧠 Deterministic Decision Engine** — Matches 9,512 possible port scenarios to 14 precise human-readable responses using `testo.json`. No AI hallucinations.
-- **🔌 Multi-IP Failover** — Tries SSH tunnels first, then falls back to direct IP. If both fail, it cleanly reports "OLT is UNREACHABLE".
 - **🔄 Stateless & Multi-User** — Laravel cookies + PHP `8` workers + FastAPI `copy.deepcopy` state isolation means 8+ engineers can use it simultaneously.
 - **🎨 DeepSeek-Style Chat UI** — Streaming typewriter output, locked admin sidebar, and a dark Mechamaru theme.
 
