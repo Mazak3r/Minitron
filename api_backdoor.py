@@ -16,11 +16,10 @@ import urllib.parse
 import threading
 import socket
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
+sys.path.insert(0, '/home/mazakar/minitron_deploy')
 
 import importlib.util
-spec = importlib.util.spec_from_file_location("radius_auth", os.path.join(SCRIPT_DIR, "Home.py"))
+spec = importlib.util.spec_from_file_location("radius_auth", "/home/mazakar/minitron_deploy/Home.py")
 radius_auth = importlib.util.module_from_spec(spec)
 sys.modules["radius_auth"] = radius_auth
 spec.loader.exec_module(radius_auth)
@@ -58,7 +57,7 @@ DEBUG_DATA = radius_auth.DEBUG_DATA
 from unified_router_api import UnifiedRouterAPI
 
 # ========== SECURITY CONFIG ==========
-CONFIG_DIR = os.path.join(SCRIPT_DIR, 'config')
+CONFIG_DIR = '/home/mazakar/minitron_deploy/config'
 API_TOKEN_FILE = os.path.join(CONFIG_DIR, 'api_token.txt')
 ALLOWED_IPS_FILE = os.path.join(CONFIG_DIR, 'allowed_ips.txt')
 
@@ -313,6 +312,93 @@ def execute_onu_action(username, action, extra_params=None):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+# ---------- Live Traffic ----------
+import asyncio as traffic_asyncio
+import telnetlib3 as traffic_telnetlib
+
+def get_live_traffic(olt_ip, pon_type, board, port, onu_id, telnet_user, telnet_pass):
+    """Get live traffic stats for an ONU via direct telnet (no 3-tier)."""
+    async def _do():
+        host, p = olt_ip, 23
+        if ':' in str(olt_ip) and not str(olt_ip).count(':') > 2:
+            host, port_str = str(olt_ip).rsplit(':', 1)
+            p = int(port_str)
+        reader, writer = await traffic_telnetlib.open_connection(host, p, connect_minwait=0.05, connect_maxwait=1)
+        writer.write(f"{telnet_user}\n")
+        await traffic_asyncio.sleep(0.5)
+        writer.write(f"{telnet_pass}\n")
+        await traffic_asyncio.sleep(0.5)
+        while True:
+            chunk = await traffic_asyncio.wait_for(reader.read(1024), timeout=5)
+            if "ZXAN>" in chunk or "ZXAN#" in chunk:
+                break
+        command = f"show interface {pon_type}-onu_1/{board}/{port}:{onu_id}\n"
+        writer.write(command)
+        output = ""
+        while True:
+            try:
+                chunk = await traffic_asyncio.wait_for(reader.read(2048), timeout=3)
+                if not chunk: break
+                output += chunk
+                if "ZXAN>" in chunk or "ZXAN#" in chunk: break
+                if '--More--' in chunk: writer.write(' ')
+            except traffic_asyncio.TimeoutError: break
+        writer.close()
+        input_rate = 0; output_rate = 0
+        m = re.search(r'Input rate\s*:\s*(\d+)\s*Bps', output)
+        if m: input_rate = int(m.group(1))
+        m = re.search(r'Output rate\s*:\s*(\d+)\s*Bps', output)
+        if m: output_rate = int(m.group(1))
+        return {
+            "success": True,
+            "input_bps": input_rate,
+            "output_bps": output_rate,
+            "input_mbps": round(input_rate / 100_000, 3),
+            "output_mbps": round(output_rate / 100_000, 3),
+        }
+    try:
+        return run_async(_do())
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+def get_live_traffic_stream(olt_ip, pon_type, board, port, onu_id, telnet_user, telnet_pass, duration=60):
+    """Stream live traffic for `duration` seconds using 3-tier connection."""
+    async def _do():
+        reader, writer = await radius_auth.telnet_connect(olt_ip)
+        samples = []
+        command = f"show interface {pon_type}-onu_1/{board}/{port}:{onu_id}\n"
+        deadline = datetime.now().timestamp() + duration
+        while datetime.now().timestamp() < deadline:
+            writer.write(command)
+            output = ""
+            while True:
+                try:
+                    chunk = await traffic_asyncio.wait_for(reader.read(2048), timeout=3)
+                    if not chunk: break
+                    output += chunk
+                    if "ZXAN>" in chunk or "ZXAN#" in chunk: break
+                    if '--More--' in chunk: writer.write(' ')
+                except traffic_asyncio.TimeoutError: break
+            input_rate = 0; output_rate = 0
+            m = re.search(r'Input rate\s*:\s*(\d+)\s*Bps', output)
+            if m: input_rate = int(m.group(1))
+            m = re.search(r'Output rate\s*:\s*(\d+)\s*Bps', output)
+            if m: output_rate = int(m.group(1))
+            samples.append({
+                "timestamp": datetime.now().isoformat(),
+                "input_bps": input_rate,
+                "output_bps": output_rate,
+                "input_mbps": round(input_rate / 100_000, 3),
+                "output_mbps": round(output_rate / 100_000, 3),
+            })
+            await traffic_asyncio.sleep(2)
+        writer.close()
+        return {"success": True, "samples": samples, "count": len(samples), "duration": duration}
+    try:
+        return run_async(_do())
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 class APIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -337,6 +423,80 @@ class APIHandler(BaseHTTPRequestHandler):
             result = run_search_like_streamlit(username)
             self._send_json(result)
             return
+        if parsed.path.startswith('/traffic/'):
+            # /traffic/{username}
+            username = urllib.parse.unquote(parsed.path[9:])
+            if not username:
+                self._send_json({"error": "username required"}, 400); return
+            # Search to find OLT/Board/Port/ONU
+            csv_results = search_proctor_csv(username)
+            if not csv_results:
+                self._send_json({"error": "User not found"}, 404); return
+            csv_result = csv_results[0]
+            olt_full = csv_result.get("olt_full", "")
+            onu_match = re.search(r'(\S+onu_\d+/\d+/\d+:\d+)', olt_full)
+            if not onu_match:
+                self._send_json({"error": "Could not parse OLT location"}, 500); return
+            onu_part = onu_match.group(1)
+            olt_name_full = olt_full.replace(onu_part, "").strip()
+            onu_type = "gpon" if "gpon-onu_" in onu_part else "epon" if "epon-onu_" in onu_part else "gpon"
+            port_onu_part = onu_part.split("_")[1] if "_" in onu_part else onu_part
+            port_part = port_onu_part.split(":")[0] if ":" in port_onu_part else port_onu_part
+            onu_id = port_onu_part.split(":")[1] if ":" in port_onu_part else "0"
+            port_parts = port_part.split('/')
+            board = port_parts[1] if len(port_parts) >= 3 else "1"
+            port = port_parts[2] if len(port_parts) >= 3 else "1"
+            olt_ip = OLT_IPS.get(olt_name_full)
+            if not olt_ip:
+                olt_name_clean = re.sub(r'\s+OLT$', '', olt_name_full)
+                olt_ip = OLT_IPS.get(olt_name_clean)
+            if not olt_ip:
+                self._send_json({"error": "OLT not found in config"}, 404); return
+            telnet_user = radius_auth.TELNET_USERNAME
+            telnet_pass = radius_auth.TELNET_PASSWORD
+            result = get_live_traffic(olt_ip, onu_type, board, port, onu_id, telnet_user, telnet_pass)
+            result["name"] = csv_result.get("smartolt_name", username)
+            result["olt"] = olt_name_full
+            result["onu_type"] = onu_type.upper()
+            result["board"] = board
+            result["port"] = port
+            result["onu_id"] = onu_id
+            self._send_json(result); return
+        if parsed.path.startswith('/traffic/stream/'):
+            # /traffic/stream/{username} — 60 seconds of live traffic
+            username = urllib.parse.unquote(parsed.path[16:])
+            if not username:
+                self._send_json({"error": "username required"}, 400); return
+            csv_results = search_proctor_csv(username)
+            if not csv_results:
+                self._send_json({"error": "User not found"}, 404); return
+            csv_result = csv_results[0]
+            olt_full = csv_result.get("olt_full", "")
+            onu_match = re.search(r'(\S+onu_\d+/\d+/\d+:\d+)', olt_full)
+            if not onu_match:
+                self._send_json({"error": "Could not parse OLT location"}, 500); return
+            onu_part = onu_match.group(1)
+            olt_name_full = olt_full.replace(onu_part, "").strip()
+            onu_type = "gpon" if "gpon-onu_" in onu_part else "epon" if "epon-onu_" in onu_part else "gpon"
+            port_onu_part = onu_part.split("_")[1] if "_" in onu_part else onu_part
+            port_part = port_onu_part.split(":")[0] if ":" in port_onu_part else port_onu_part
+            onu_id = port_onu_part.split(":")[1] if ":" in port_onu_part else "0"
+            port_parts = port_part.split('/')
+            board = port_parts[1] if len(port_parts) >= 3 else "1"
+            port = port_parts[2] if len(port_parts) >= 3 else "1"
+            olt_ip = OLT_IPS.get(olt_name_full)
+            if not olt_ip:
+                olt_name_clean = re.sub(r'\s+OLT$', '', olt_name_full)
+                olt_ip = OLT_IPS.get(olt_name_clean)
+            if not olt_ip:
+                self._send_json({"error": "OLT not found in config"}, 404); return
+            telnet_user = radius_auth.TELNET_USERNAME
+            telnet_pass = radius_auth.TELNET_PASSWORD
+            result = get_live_traffic_stream(olt_ip, onu_type, board, port, onu_id, telnet_user, telnet_pass, duration=60)
+            result["name"] = csv_result.get("smartolt_name", username)
+            result["olt"] = olt_name_full
+            result["onu_type"] = onu_type.upper()
+            self._send_json(result); return
         if parsed.path.startswith('/onu/'):
             qp = urllib.parse.parse_qs(parsed.query)
             username = qp.get('username', [None])[0]
