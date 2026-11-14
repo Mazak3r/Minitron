@@ -57,14 +57,21 @@ MINITRON automates the entire pipeline. Support engineers type a name, hit enter
 
 MINITRON uses a **decoupled Frontend/Backend** architecture.
 
-```text
-┌─────────────────────┐        HTTP/JSON        ┌──────────────────────────┐
-│   Laravel (UI)      │ ◄─────────────────────► │  FastAPI Backend         │
-│  - Blade/Mechamaru  │   (POST /api/search)    │  - Job System            │
-│  - Streaming JS     │   (GET /api/jobs/{id})  │  - Telnet (ZTE/CDATA)    │
-│  - PHP 8 Workers    │                         │  - Diameter / RADIUS     │
-└─────────────────────┘                         └──────────────────────────┘
-         │                                                    │
-         ▼                                                    ▼
-   Cookie Sessions                                      Local State
-   (CSRF-safe)                                     (deepcopy per job)
+```mermaid
+flowchart LR
+    subgraph Frontend ["Laravel UI"]
+        direction TB
+        L["Laravel (UI)<br/>• Blade / Mechamaru<br/>• Streaming JS<br/>• PHP 8 Workers"]
+        CS[("Cookie Sessions<br/>(CSRF-safe)")]
+        L --> CS
+    end
+
+    subgraph Backend ["FastAPI Backend"]
+        direction TB
+        F["FastAPI Backend<br/>• Job System<br/>• Telnet (ZTE / CDATA)<br/>• Diameter / RADIUS"]
+        LS[("Local State<br/>(deepcopy per job)")]
+        F --> LS
+    end
+
+    L <-->|"HTTP / JSON<br/>POST /api/search<br/>GET /api/jobs/{id}"| F
+```
