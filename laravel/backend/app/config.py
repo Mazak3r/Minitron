@@ -89,7 +89,7 @@ CDATA_USERNAME = CONFIG.get("cdata_credentials", {}).get("username", "admin")
 CDATA_PASSWORD = CONFIG.get("cdata_credentials", {}).get("password", "admin123")
 
 # ---- Health Check ----
-HEALTH_CHECK = CONFIG.get("health_check", {"tunnel_test": "127.0.0.1:2323", "ping_test": "192.168.44.1"})
+HEALTH_CHECK = CONFIG.get("health_check", {"tunnel_test": "127.0.0.1:2323", "ping_test": "192.168.88.1"})
 
 # ---- MAC prefixes ----
 UBNT_MAC_PREFIXES = MAC_PREFIXES.get("ubnt", [])
